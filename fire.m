@@ -2,8 +2,8 @@
 %%%Fuction detects fire from the image in JPEG format
 function [result, outImg] = fire(inImg)
 %close all hidden;
-delete('D:\workspace\matlab\ImageSegmentation\video\script\*')
-Folder = 'D:\workspace\matlab\ImageSegmentation\video\script';
+delete('D:\workspace\matlab\ImageSegmentation_FireDetection\video\script\*')
+Folder = 'D:\workspace\matlab\ImageSegmentation_FireDetection\video\script';
 Im1 = inImg;
 imwrite(Im1, fullfile(Folder, 'fire.jpg'));
 %figure

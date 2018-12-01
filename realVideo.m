@@ -1,9 +1,9 @@
 try
 cam = webcam;
 preview(cam)
-delete('D:\workspace\matlab\ImageSegmentation\video\image\*')
-Folder = 'D:\workspace\matlab\ImageSegmentation\video\image';
-vidWriter = VideoWriter('D:\workspace\matlab\ImageSegmentation\video\realtime');
+delete('D:\workspace\matlab\ImageSegmentation_FireDetection\video\frames\*')
+Folder = 'D:\workspace\matlab\ImageSegmentation_FireDetection\video\frames';
+vidWriter = VideoWriter('D:\workspace\matlab\ImageSegmentation_FireDetection\video\realtime');
 open(vidWriter);
 re = 0;
 for index = 1:10000000

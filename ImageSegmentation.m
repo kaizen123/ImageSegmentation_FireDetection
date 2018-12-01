@@ -551,7 +551,6 @@ end
 % Kmeans++
 global m ImgName;
 [time, count, m] = K_means_Run(inImg, nClass);
-fprintf(count);
 name = strcat(ImgName,'_result.jpg');
 imwrite(uint8(m),name);
 tic;
@@ -562,6 +561,11 @@ axes(handles.axes4)
 ax = gca;
 imshow(outImg2);
 colormap(ax,map2);
+[MSE, MAE, SNR, PSNR, SC]=getMSE_MAE_SNR_PSNR_SC(inImg, m);
+SSIM = getSSIM(inImg, m);
+% Alert user of the answer.
+message = sprintf(' MSE %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+msgbox(message);
       
       
 index255 = 0;
@@ -699,43 +703,43 @@ for r = 1:size(outImg2,1)
     end
 end
 
-sum = r*c;
+range = r*c;
 axes(handles.axes6)
 ax = gca;
 switch pop2
     case 1
-        H = pie([index255/sum index128/sum]);
+        H = pie([index255/range index128/range]);
         colormap(ax, [[0.5 0 0];[0.5625 1.0 0.4375]]);
     case 2
-        H = pie([index255/sum index170/sum index85/sum]);
+        H = pie([index255/range index170/range index85/range]);
         colormap(ax, [[0.5 0 0];[1.0 0.8125 0];[0 0.875 1.0]]);
         
     case 3
-        H = pie([index255/sum index191/sum index128/sum index64/sum]);
+        H = pie([index255/range index191/range index128/range index64/range]);
         colormap(ax, [[0.5 0 0];[1.0 0.5 0];[0.5625 1.0 0.4375];[0 0.5625 1.0]]);
         
     case 4
-        H = pie([index255/sum index204/sum index153/sum index102/sum index51/sum]);
+        H = pie([index255/range index204/range index153/range index102/range index51/range]);
         colormap(ax, [[0.5 0 0];[1.0 0.25 0];[0.9375 1.0 0.0625];[0.125 1.0 0.8750];[0 0.3125 1.0]]);
               
     case 5     
-        H = pie([index255/sum index213/sum index170/sum index128/sum index85/sum index43/sum]);
+        H = pie([index255/range index213/range index170/range index128/range index85/range index43/range]);
         colormap(ax, [[0.5 0 0];[1.0 0.125 0];[1.0 0.8125 0];[0.5625 1.0 0.4375];[0 0.875 1.0];[0 0.1875 1.0]]);
         
     case 6    
-        H = pie([index255/sum index219/sum index182/sum index146/sum index109/sum index73/sum index36/sum]);
+        H = pie([index255/range index219/range index182/range index146/range index109/range index73/range index36/range]);
         colormap(ax, [[0.5 0 0];[1.0 0.0625 0];[1.0 0.625 0];[0.8125 1.0 0.1875];[0.25 1.0 0.75];[0 0.6875 1.0];[0 0.125 1.0]]);
     
     case 7
-        H = pie([index255/sum index223/sum index191/sum index159/sum index128/sum index96/sum index64/sum index32/sum]);
+        H = pie([index255/range index223/range index191/range index159/range index128/range index96/range index64/range index32/range]);
         colormap(ax, [[0.5 0 0];[1.0 0 0];[1.0 0.5 0];[1.0 1.0 0];[0.5625 1.0 0.4375];[0.0625 1.0 0.9375];[0 0.5625 1.0];[0 0.0625 1.0]]);
     
     case 8
-        H = pie([index255/sum index227/sum index198/sum index170/sum index142/sum index113/sum index85/sum index57/sum index28/sum]);
+        H = pie([index255/range index227/range index198/range index170/range index142/range index113/range index85/range index57/range index28/range]);
         colormap(ax, [[0.5 0 0];[0.9375 0 0];[1.0 0.375 0];[1.0 0.8125 0];[0.75 1.0 0.25];[0.3125 1.0 0.6875];[0 0.875 1.0];[0 0.4375 1.0];[0 0 1.0]]);
     
     case 9
-        H = pie([index255/sum index230/sum index204/sum index179/sum index153/sum index128/sum index102/sum index77/sum index51/sum index26/sum]);
+        H = pie([index255/range index230/range index204/range index179/range index153/range index128/range index102/range index77/range index51/range index26/range]);
         colormap(ax, [[0.5 0 0];[0.875 0 0];[1.0 0.25 0];[1.0 0.6875 0];[0.9375 1.0 0.0625];[0.5625 1.0 0.4375];[0.125 1.0 0.875];[0 0.75 1.0];[0 0.3125 1.0];[0 0 0.9375]]);
        
 end
@@ -991,8 +995,8 @@ if ~isequal(filename,0)
     implay([path,filename]);
     
 set(handles.detectvideo,'Enable','on')
-Folder = strcat(path,'\image');
-delete('D:\workspace\matlab\ImageSegmentation\video\image\*')
+Folder = strcat(path,'\frames');
+delete('D:\workspace\matlab\ImageSegmentation_FireDetection\video\frames\*')
 i = 1;
 try
 while hasFrame(inVideo)
@@ -1016,6 +1020,7 @@ FileList = dir(fullfile(Folder, '*.jpg'));
 
 axes(handles.axes2)
 tic;
+re = 0;
 for iFile = 1:length(FileList)
   aFile = fullfile(Folder, FileList(iFile).name);
   inImg1 = imread(aFile);
@@ -1071,9 +1076,9 @@ global inImg1 outImg1 cam vidWriter
 cam = webcam;
 closewc = 0;
 preview(cam)
-delete('D:\workspace\matlab\ImageSegmentation\video\image\*')
-Folder = 'D:\workspace\matlab\ImageSegmentation\video\image';
-vidWriter = VideoWriter('D:\workspace\matlab\ImageSegmentation\video\realtime');
+delete('D:\workspace\matlab\ImageSegmentation_FireDetection\video\frames\*')
+Folder = 'D:\workspace\matlab\ImageSegmentation_FireDetection\video\frames';
+vidWriter = VideoWriter('D:\workspace\matlab\ImageSegmentation_FireDetection\video\realtime');
 open(vidWriter);
 re = 0;
 axes(handles.axes2)
