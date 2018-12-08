@@ -78,13 +78,14 @@ function open1_Callback(hObject, eventdata, handles)
 % hObject    handle to open1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1
+global inImg1 ImgName
 [filename,path] = uigetfile({'*.jpg';'*.jpeg';'*.bmp';'*.png';'*.tif'},...
     'Choose an image');
 if ~isequal(filename,0)
     Info = imfinfo(fullfile(path,filename));
     if Info.BitDepth == 24
     inImg1 = imread([path,filename]);
+    ImgName = filename;
     axes(handles.axes1)
     imshow(inImg1);
     else
@@ -204,16 +205,13 @@ map1 =  [[0         0    0.5625];
     [0.6875         0         0];
     [0.5000         0         0]]; 
 
-h = waitbar(0,'Please wait...');
-pause(.5)
+
 global inImg1 outImg1
 inImg = inImg1;
 nBins = 5;
 winSize = 5;
 pop1 = get(handles.pop1,'value');
 popAlg = get(handles.popAlg,'value');
-waitbar(.33,h,'Please wait...');
-pause(1)
 switch pop1
     case 1
         nClass = 2;
@@ -234,15 +232,27 @@ switch pop1
     case 9
         nClass = 10;
 end
-
+global ImgName;
 switch popAlg
-    case 1
+    case 1       
+        [time, count, m] = K_means(inImg, nClass);
+        name = strcat(ImgName,'_kmeans.jpg');
+        imwrite(uint8(m),name);
         tic;
-        outImg1 = ImgSeg(inImg, nBins, winSize, nClass);
+        outImg1 = ImgSeg(m, nBins, winSize, nClass);
         toc;
-        set(handles.time1,'string',toc);
+        set(handles.loop1,'string',count);
+        set(handles.time1,'string',time + toc);
+        [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
+        SSIM = getSSIM(inImg, m);
+        % Alert user of the answer.
+        message = sprintf(' MSE %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+        h = msgbox(message, 'Kmeans evaluation');  
+        
     case 2
         [m, time] = main_color(inImg, nBins, winSize, nClass);
+        name = strcat(ImgName,'_fcm_kmeans.jpg');
+        imwrite(uint8(m),name);
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
         set(handles.time1,'string',time);
 end
@@ -252,6 +262,7 @@ try
 catch
 
 end
+
 axes(handles.axes2)
 ax = gca;
 imshow(outImg1);
@@ -550,22 +561,24 @@ end
 
 % Kmeans++
 global m ImgName;
-[time, count, m] = K_means_Run(inImg, nClass);
-name = strcat(ImgName,'_result.jpg');
+[time, count, m] = K_means_pp(inImg, nClass);
+m = lab2rgb(m);
+name = strcat(ImgName,'_kmeans_pp.jpg');
 imwrite(uint8(m),name);
 tic;
 outImg2 = ImgSeg(m, nBins, winSize, nClass);
 toc;
+set(handles.loop2,'string',count);
 set(handles.time2,'string',time + toc);
 axes(handles.axes4)
 ax = gca;
 imshow(outImg2);
 colormap(ax,map2);
-[MSE, MAE, SNR, PSNR, SC]=getMSE_MAE_SNR_PSNR_SC(inImg, m);
+[MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
 SSIM = getSSIM(inImg, m);
 % Alert user of the answer.
 message = sprintf(' MSE %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
-msgbox(message);
+msgbox(message, 'Kmeans++ evaluation');
       
       
 index255 = 0;
@@ -743,7 +756,6 @@ switch pop2
         colormap(ax, [[0.5 0 0];[0.875 0 0];[1.0 0.25 0];[1.0 0.6875 0];[0.9375 1.0 0.0625];[0.5625 1.0 0.4375];[0.125 1.0 0.875];[0 0.75 1.0];[0 0.3125 1.0];[0 0 0.9375]]);
        
 end
-%kmeans_pp(nClass, inImg);
 T = H(strcmpi(get(H,'Type'),'text'));
 P = cell2mat(get(T,'Position'));
 set(T,{'Position'},num2cell(P*0.6,2));
@@ -802,6 +814,7 @@ function clear1_Callback(hObject, eventdata, handles)
 axes(handles.axes2)
 cla reset;
 set(handles.time1,'string',0)
+set(handles.loop1,'string',0)
 set(handles.save1,'Enable','off')
 set(handles.htg1,'Enable','off')
 axes(handles.axes5)
@@ -816,6 +829,7 @@ function clear2_Callback(hObject, eventdata, handles)
 axes(handles.axes4)
 cla reset;
 set(handles.time2,'string',0)
+set(handles.loop2,'string',0)
 set(handles.save2,'Enable','off')
 set(handles.htg2,'Enable','off')
 axes(handles.axes6)
@@ -1469,11 +1483,59 @@ outImg = reshape(fusedMapShow,s(1),s(2));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Kmeans++
-function [time, count,m] = K_means_Run(Img,k)
+function [time, count, m] = K_means_pp(Img,k)
 h = waitbar(0,'Please wait ...');
 tic;
 count = 0;
 m = double(Img);
+m = rgb2lab(m);
+[maxRow,maxCol,lab] = size(m); 
+% initial value of centroid 
+c = zeros(1,k,lab);
+for i = 1:k 
+    c(1,i,:)= m(i,i,:);  
+end
+
+temp = zeros(maxRow,maxCol); % initialize as zero vector
+
+while(1)
+    waitbar(count/100);
+    d=DistMatrix(m,c); % calculate objcets-centroid distances 
+    [~,g]=min(d,[],3); % find group matrix g 
+    if(g == temp)
+        for i = 1:k
+            [x,y] = find(g == i);
+            num = size(x,1);
+            for j = 1:num
+                m(x(j),y(j),:) = c(1,i,:);
+            end
+        end
+        break; % stop the iteration 
+    else 
+        count = count + 1;
+        temp=g; % copy group matrix to temporary variable 
+        % Recalculate the centroids
+        c = zeros(1,k,lab);
+        for i = 1:k
+            [x,y] = find(g == i);
+            num = size(x,1);
+            for j = 1:num
+                c(1,i,:) = c(1,i,:) + m(x(j),y(j),:)/num;
+            end
+        end
+    end 
+end 
+time = toc;
+close(h); 
+
+
+%Kmeans
+function [time, count, m] = K_means(Img,k)
+h = waitbar(0,'Please wait ...');
+tic;
+count = 0;
+m = double(Img);
+%m = rgb2lab(m);
 [maxRow,maxCol,rgb] = size(m); 
 % initial value of centroid 
 c = zeros(1,k,rgb);
@@ -1527,4 +1589,51 @@ for i = 1:c
     d(:,:,i) = sqrt(sum(temp.^2,3));
 end
 
+function [mse, mae, snr, psnr, SC]=compare(frameReference,frameUnderTest)
+s1=(double(frameReference)-double(frameUnderTest)).^2;
+s2=abs(double(frameReference) - double(frameUnderTest));
+s3=double(frameReference).^2;
+s4=double(frameReference).^2;
+s4=sum(s4(:));
+s5=double(frameUnderTest).^2;
+s5=sum(s5(:));
+    
+    sse = sum(s1(:));
+    range = double(size(frameReference,1)*size(frameReference,2)*size(frameReference,3));
+    mse  = sse / range;
+    mae = sum(s2(:)) / range;
+    SC = s4 / s5;
+    if( sse <= 1e-10) 
+        snr = 100;
+        psnr=100;
+    else
+        snr = sum(s3(:)) / sse;
+        psnr = 10.0 * log10((255^2) / mse);
+    end
+
+function ssim=getSSIM(frameReference,frameUnderTest)
+C1 = 6.5025;
+C2 = 58.5225;
+frameReference=double(frameReference);
+frameUnderTest=double(frameUnderTest);
+frameReference_2=frameReference.^2;
+frameUnderTest_2=frameUnderTest.^2;
+frameReference_frameUnderTest=frameReference.*frameUnderTest;
+%///////////////////////////////// PRELIMINARY COMPUTING //////////////////
+mu1=imgaussfilt(frameReference,1.5);
+mu2=imgaussfilt(frameUnderTest,1.5);
+mu1_2=mu1.^2;
+mu2_2=mu2.^2;
+mu1_mu2=mu1.*mu2;
+sigma1_2=imgaussfilt(frameReference_2,1.5);
+sigma1_2=sigma1_2-mu1_2;
+sigma2_2=imgaussfilt(frameUnderTest_2,1.5);
+sigma2_2=sigma2_2-mu2_2;
+sigma12=imgaussfilt(frameReference_frameUnderTest,1.5);
+sigma12=sigma12-mu1_mu2;
+%///////////////////////////////// FORMULA ////////////////////////////////
+t3 = ((2*mu1_mu2 + C1).*(2*sigma12 + C2));
+t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2));
+ssim_map =  t3./t1;
+ssim = mean2(ssim_map); ssim=mean(ssim(:));
 
