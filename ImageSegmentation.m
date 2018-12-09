@@ -22,10 +22,12 @@ function varargout = ImageSegmentation(varargin)
 
 % Edit the above text to modify the response to help ImageSegmentation
 
-% Last Modified by GUIDE v2.5 27-Oct-2018 15:08:00
+% Last Modified by GUIDE v2.5 09-Dec-2018 08:38:11
 
 % Begin initialization code - result03 NOT EDIT
 gui_Singleton = 1;
+global FolderOutput;
+FolderOutput = 'D:\workspace\matlab\ImageSegmentation_FireDetection\output_image';
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @ImageSegmentation_OpeningFcn, ...
@@ -78,7 +80,7 @@ function open1_Callback(hObject, eventdata, handles)
 % hObject    handle to open1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1 ImgName
+global inImg1 ImgName;
 [filename,path] = uigetfile({'*.jpg';'*.jpeg';'*.bmp';'*.png';'*.tif'},...
     'Choose an image');
 if ~isequal(filename,0)
@@ -110,7 +112,7 @@ function open2_Callback(hObject, eventdata, handles)
 % hObject    handle to open2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg2 ImgName
+global inImg2 ImgName;
 [filename,path] = uigetfile({'*.jpg';'*.jpeg';'*.bmp';'*.png';'*.tif'},...
     'Choose an image');
 if ~isequal(filename,0)
@@ -139,7 +141,7 @@ function process1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global map1
+global map1;
 map1 =  [[0         0    0.5625];
          [0         0    0.6250];
          [0         0    0.6875];
@@ -206,7 +208,7 @@ map1 =  [[0         0    0.5625];
     [0.5000         0         0]]; 
 
 
-global inImg1 outImg1
+global inImg1 outImg1 FolderOutput;
 inImg = inImg1;
 nBins = 5;
 winSize = 5;
@@ -237,7 +239,7 @@ switch popAlg
     case 1       
         [time, count, m] = K_means(inImg, nClass);
         name = strcat(ImgName,'_kmeans.jpg');
-        imwrite(uint8(m),name);
+        imwrite(uint8(m), fullfile(FolderOutput, name));
         tic;
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
         toc;
@@ -252,7 +254,7 @@ switch popAlg
     case 2
         [m, time] = main_color(inImg, nBins, winSize, nClass);
         name = strcat(ImgName,'_fcm_kmeans.jpg');
-        imwrite(uint8(m),name);
+        imwrite(uint8(m), fullfile(FolderOutput, name));
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
         set(handles.time1,'string',time);
 end
@@ -466,7 +468,7 @@ function process2_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global map2
+global map2;
 map2 =  [[0         0    0.5625];
          [0         0    0.6250];
          [0         0    0.6875];
@@ -532,7 +534,7 @@ map2 =  [[0         0    0.5625];
     [0.5625         0         0];
     [0.5000         0         0]]; 
 
-global inImg2 outImg2
+global inImg2 outImg2;
 inImg = inImg2;
 nBins = 5;
 winSize = 5;
@@ -560,11 +562,11 @@ switch pop2
 end
 
 % Kmeans++
-global m ImgName;
+global ImgName FolderOutput;
 [time, count, m] = K_means_pp(inImg, nClass);
 m = lab2rgb(m);
 name = strcat(ImgName,'_kmeans_pp.jpg');
-imwrite(uint8(m),name);
+imwrite(uint8(m), fullfile(FolderOutput, name));
 tic;
 outImg2 = ImgSeg(m, nBins, winSize, nClass);
 toc;
@@ -768,8 +770,8 @@ function save1_Callback(hObject, eventdata, handles)
 % hObject    handle to save1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global outImg1
-global map
+global outImg1;
+global map;
   [filename,pathname]=uiputfile({'*.jpg','JPEG Files(*.jpg)';... 
            '*.bmp','Bitmap Files(*.bmp)';'*.gif','GIF Files(*.gif)';... 
            '*.tif','TIFF Files(*.tif)';... 
@@ -789,8 +791,8 @@ function save2_Callback(hObject, eventdata, handles)
 % hObject    handle to save2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global outImg2
-global map
+global outImg2;
+global map;
   [filename,pathname]=uiputfile({'*.jpg','JPEG Files(*.jpg)';... 
            '*.bmp','Bitmap Files(*.bmp)';'*.gif','GIF Files(*.gif)';... 
            '*.tif','TIFF Files(*.tif)';... 
@@ -841,7 +843,7 @@ function htg01_Callback(hObject, eventdata, handles)
 % hObject    handle to htg01 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1
+global inImg1;
 figure('name','Histogram01','numbertitle','off');
 imhist(rgb2gray(inImg1));
 title('Histogram');
@@ -851,7 +853,7 @@ function htg02_Callback(hObject, eventdata, handles)
 % hObject    handle to htg02 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg2
+global inImg2;
 figure('name','Histogram02','numbertitle','off');
 imhist(rgb2gray(inImg2));
 title('Histogram');
@@ -861,7 +863,7 @@ function htg1_Callback(hObject, eventdata, handles)
 % hObject    handle to htg1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global outImg1
+global outImg1;
 figure('name','Histogram1','numbertitle','off');
 imhist(outImg1);
 title('Histogram');
@@ -871,7 +873,7 @@ function htg2_Callback(hObject, eventdata, handles)
 % hObject    handle to htg2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global outImg2
+global outImg2;
 figure('name','Histogram2','numbertitle','off');
 imhist(outImg2);
 title('Histogram');
@@ -962,16 +964,6 @@ switch choice
 end
 
 
-% --- Executes during object creation, after setting all properties.
-function logo_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to logo (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: place code in OpeningFcn to populate logo
-hust = imread('hust.jpg');
-imshow(hust);
-
 
 % --- Executes on selection change in popAlg.
 function popAlg_Callback(hObject, eventdata, handles)
@@ -1001,7 +993,7 @@ function openvideo_Callback(hObject, eventdata, handles)
 % hObject    handle to openvideo (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inVideo  Folder
+global inVideo  Folder;
 [filename,path] = uigetfile({'*.mp4';'*.mov';'*.wmv';'*.vob';'*.rm';'*.asf';'*.3gp';'*.avi'},...
     'Choose an video');
 if ~isequal(filename,0)
@@ -1029,7 +1021,7 @@ function detectvideo_Callback(hObject, eventdata, handles)
 % hObject    handle to detectvideo (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1 Folder outImg1
+global inImg1 Folder outImg1;
 FileList = dir(fullfile(Folder, '*.jpg'));
 
 axes(handles.axes2)
@@ -1061,7 +1053,7 @@ function detectimage_Callback(hObject, eventdata, handles)
 % hObject    handle to detectimage (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1 outImg1
+global inImg1 outImg1;
   axes(handles.axes2)
   tic;
   [re, outImg1] = fire(inImg1);
@@ -1085,8 +1077,8 @@ function wc_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.stopwc,'Enable','on');
-global closewc
-global inImg1 outImg1 cam vidWriter
+global closewc;
+global inImg1 outImg1 cam vidWriter;
 cam = webcam;
 closewc = 0;
 preview(cam)
@@ -1142,7 +1134,7 @@ function stopwc_Callback(hObject, eventdata, handles)
 % hObject    handle to stopwc (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global cam vidWriter closewc
+global cam vidWriter closewc;
 closewc = 1;
 try
 closePreview(cam)
@@ -1637,3 +1629,13 @@ t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2));
 ssim_map =  t3./t1;
 ssim = mean2(ssim_map); ssim=mean(ssim(:));
 
+
+
+% --- Executes during object creation, after setting all properties.
+function logo_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to logo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+Logo = imread('hust.jpg');
+imshow(Logo);
+% Hint: place code in OpeningFcn to populate logo
