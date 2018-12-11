@@ -22,7 +22,7 @@ function varargout = ImageSegmentation(varargin)
 
 % Edit the above text to modify the response to help ImageSegmentation
 
-% Last Modified by GUIDE v2.5 09-Dec-2018 08:38:11
+% Last Modified by GUIDE v2.5 11-Dec-2018 22:43:55
 
 % Begin initialization code - result03 NOT EDIT
 gui_Singleton = 1;
@@ -1648,3 +1648,10 @@ function logo_CreateFcn(hObject, eventdata, handles)
 Logo = imread('hust.jpg');
 imshow(Logo);
 % Hint: place code in OpeningFcn to populate logo
+
+
+% --- Executes on button press in step_btn.
+function step_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to step_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
