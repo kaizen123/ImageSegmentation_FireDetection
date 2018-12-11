@@ -248,15 +248,21 @@ switch popAlg
         [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
         SSIM = getSSIM(inImg, m);
         % Alert user of the answer.
-        message = sprintf(' MSE %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
-        h = msgbox(message, 'Kmeans evaluation');  
+        message = sprintf('Ket qua K-means\n MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+        h = msgbox(message, 'K-means evaluation');  
         
     case 2
         [m, time] = main_color(inImg, nBins, winSize, nClass);
         name = strcat(ImgName,'_fcm_kmeans.jpg');
         imwrite(uint8(m), fullfile(FolderOutput, name));
+        tic;
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
-        set(handles.time1,'string',time);
+        toc;
+        set(handles.time1,'string',time + toc);
+        [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
+        SSIM = getSSIM(inImg, m);
+        message = sprintf('Ket qua FCM MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+        h = msgbox(message, 'FCM evaluation');
 end
 try
     waitbar(.67,h,'Please wait...');
@@ -579,8 +585,8 @@ colormap(ax,map2);
 [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
 SSIM = getSSIM(inImg, m);
 % Alert user of the answer.
-message = sprintf(' MSE %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
-msgbox(message, 'Kmeans++ evaluation');
+message = sprintf('Ket qua K-means cai tien\n MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+msgbox(message, 'K-means cai tien');
       
       
 index255 = 0;
@@ -1481,6 +1487,7 @@ tic;
 count = 0;
 m = double(Img);
 m = rgb2lab(m);
+
 [maxRow,maxCol,lab] = size(m); 
 % initial value of centroid 
 c = zeros(1,k,lab);
@@ -1517,6 +1524,7 @@ while(1)
         end
     end 
 end 
+
 time = toc;
 close(h); 
 
@@ -1564,6 +1572,7 @@ while(1)
         end
     end 
 end 
+
 time = toc;
 close(h); 
 
