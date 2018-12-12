@@ -22,7 +22,7 @@ function varargout = ImageSegmentation(varargin)
 
 % Edit the above text to modify the response to help ImageSegmentation
 
-% Last Modified by GUIDE v2.5 11-Dec-2018 22:43:55
+% Last Modified by GUIDE v2.5 12-Dec-2018 23:30:08
 
 % Begin initialization code - result03 NOT EDIT
 gui_Singleton = 1;
@@ -999,7 +999,7 @@ function openvideo_Callback(hObject, eventdata, handles)
 % hObject    handle to openvideo (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inVideo  Folder;
+global inVideo  Folder check;
 [filename,path] = uigetfile({'*.mp4';'*.mov';'*.wmv';'*.vob';'*.rm';'*.asf';'*.3gp';'*.avi'},...
     'Choose an video');
 if ~isequal(filename,0)
@@ -1016,6 +1016,9 @@ while hasFrame(inVideo)
     imwrite(vidFrame, fullfile(Folder, sprintf('%06d.jpg', i)));
     pause(1/inVideo.FrameRate);
     i = i + 1;
+    if check == true
+        break;
+    end
 end
 catch
 end
@@ -1027,17 +1030,19 @@ function detectvideo_Callback(hObject, eventdata, handles)
 % hObject    handle to detectvideo (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1 Folder outImg1;
+global inImg1 Folder outImg1 check;
 FileList = dir(fullfile(Folder, '*.jpg'));
 
 axes(handles.axes2)
 tic;
 re = 0;
+check = false;
 for iFile = 1:length(FileList)
   aFile = fullfile(Folder, FileList(iFile).name);
   inImg1 = imread(aFile);
   [re, outImg1] = fire(inImg1);
   if re == 1
+      check = true;
       toc;
       msgbox('fire detected!');
       break;
@@ -1099,7 +1104,6 @@ for index = 1:10000000
     if closewc == 1
         break;
     end
-    frame = index
     % Acquire frame for processing
     try
     inImg1 = snapshot(cam);
@@ -1655,3 +1659,34 @@ function step_btn_Callback(hObject, eventdata, handles)
 % hObject    handle to step_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in test_btn.
+function test_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to test_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Folder = uigetdir();
+
+if ~isequal(Folder,0)
+    delete('D:\workspace\matlab\ImageSegmentation_FireDetection\dataset\output\*');
+    h = waitbar(0,'Please wait ...');
+    %Folder = 'D:\workspace\matlab\ImageSegmentation_FireDetection\dataset\fire\';
+    FileList = dir(fullfile(Folder, '*.jpg'));
+    sum = length(FileList);
+    count = 0;
+    for iFile = 1:length(FileList)
+        aFile = fullfile(Folder, FileList(iFile).name);
+        inImg1 = imread(aFile);
+        [re, ~] = test_fire(inImg1, count);
+        count = count + re;
+    end
+    
+    message = sprintf('Ket qua\n Fire = %.2f.\n Sum = %.2f.\n', count, sum);
+    msgbox(message, 'Test');
+    close(h);
+else
+    return;
+end    
+

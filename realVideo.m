@@ -7,7 +7,7 @@ vidWriter = VideoWriter('D:\workspace\matlab\ImageSegmentation_FireDetection\vid
 open(vidWriter);
 re = 0;
 for index = 1:10000000
-    frame = index
+    frame = index;
     % Acquire frame for processing
     img = snapshot(cam);
     % Write frame to video
