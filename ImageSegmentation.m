@@ -22,12 +22,12 @@ function varargout = ImageSegmentation(varargin)
 
 % Edit the above text to modify the response to help ImageSegmentation
 
-% Last Modified by GUIDE v2.5 12-Dec-2018 23:30:08
+% Last Modified by GUIDE v2.5 13-Dec-2018 22:34:40
 
 % Begin initialization code - result03 NOT EDIT
 gui_Singleton = 1;
 global FolderOutput;
-FolderOutput = 'D:\workspace\matlab\ImageSegmentation_FireDetection\output_image';
+FolderOutput = 'D:\workspace\matlab\ImageSegmentation_FireDetection\output_images';
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @ImageSegmentation_OpeningFcn, ...
@@ -80,14 +80,14 @@ function open1_Callback(hObject, eventdata, handles)
 % hObject    handle to open1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg1 ImgName;
+global inImg1 ImgName1;
 [filename,path] = uigetfile({'*.jpg';'*.jpeg';'*.bmp';'*.png';'*.tif'},...
     'Choose an image');
 if ~isequal(filename,0)
     Info = imfinfo(fullfile(path,filename));
     if Info.BitDepth == 24
     inImg1 = imread([path,filename]);
-    ImgName = filename;
+    ImgName1 = filename;
     axes(handles.axes1)
     imshow(inImg1);
     else
@@ -112,14 +112,14 @@ function open2_Callback(hObject, eventdata, handles)
 % hObject    handle to open2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global inImg2 ImgName;
+global inImg2 ImgName2;
 [filename,path] = uigetfile({'*.jpg';'*.jpeg';'*.bmp';'*.png';'*.tif'},...
     'Choose an image');
 if ~isequal(filename,0)
     Info = imfinfo(fullfile(path,filename));
     if Info.BitDepth == 24
     inImg2 = imread([path,filename]);
-    ImgName = filename;
+    ImgName2 = filename;
     axes(handles.axes3)
     imshow(inImg2);
     else
@@ -134,6 +134,7 @@ set(handles.name2,'string',filename);
 set(handles.pop2,'Enable','on')
 set(handles.process2,'Enable','on')
 set(handles.htg02,'Enable','on')
+set(handles.preprocess2,'Enable','on')
 
 % --- Executes on button press in process1.
 function process1_Callback(hObject, eventdata, handles)
@@ -234,11 +235,11 @@ switch pop1
     case 9
         nClass = 10;
 end
-global ImgName;
+global ImgName1;
 switch popAlg
     case 1       
         [time, count, m] = K_means(inImg, nClass);
-        name = strcat(ImgName,'_kmeans.jpg');
+        name = strcat(ImgName1,'_kmeans.jpg');
         imwrite(uint8(m), fullfile(FolderOutput, name));
         tic;
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
@@ -253,7 +254,7 @@ switch popAlg
         
     case 2
         [m, time] = main_color(inImg, nBins, winSize, nClass);
-        name = strcat(ImgName,'_fcm_kmeans.jpg');
+        name = strcat(ImgName1,'_fcm_kmeans.jpg');
         imwrite(uint8(m), fullfile(FolderOutput, name));
         tic;
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
@@ -568,10 +569,10 @@ switch pop2
 end
 
 % Kmeans++
-global ImgName FolderOutput;
+global ImgName2 FolderOutput;
 [time, count, m] = K_means_pp(inImg, nClass);
 m = lab2rgb(m);
-name = strcat(ImgName,'_kmeans_pp.jpg');
+name = strcat(ImgName2,'_kmeans_pp.jpg');
 imwrite(uint8(m), fullfile(FolderOutput, name));
 tic;
 outImg2 = ImgSeg(m, nBins, winSize, nClass);
@@ -1643,6 +1644,27 @@ ssim_map =  t3./t1;
 ssim = mean2(ssim_map); ssim=mean(ssim(:));
 
 
+function M = SMQT(V, l, L)
+if l>L 
+    M = zeros(size(V), 'like', V);
+    return;
+end
+meanV = nanmean(V(:));
+D0 = V;
+D1 = V;
+if not(isnan(meanV)) 
+    D0(D0 > meanV) = NaN;
+    D1(D1 <= meanV) = NaN;
+end
+M = not(isnan(D1)) * (2^(L-l));
+if l==L 
+    return;
+end
+M0 = SMQT(D0, l+1, L);
+M1 = SMQT(D1, l+1, L);
+M = M + M0 + M1;
+
+
 
 % --- Executes during object creation, after setting all properties.
 function logo_CreateFcn(hObject, eventdata, handles)
@@ -1689,4 +1711,24 @@ if ~isequal(Folder,0)
 else
     return;
 end    
+
+
+
+% --- Executes on button press in preprocess2.
+function preprocess2_Callback(hObject, eventdata, handles)
+% hObject    handle to preprocess2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global inImg2 FolderOutput ImgName2;
+tic;
+l=1;
+L=8;
+inImg2 = uint8(SMQT(double(inImg2), l, L));
+toc;
+set(handles.time2,'string',toc);
+axes(handles.axes4);
+imshow(inImg2);
+name = strcat('pre_', ImgName2);
+imwrite(inImg2, fullfile(FolderOutput, name));
+
 
