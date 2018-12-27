@@ -239,6 +239,13 @@ global ImgName1;
 switch popAlg
     case 1       
         [time, count, m] = K_means(inImg, nClass);
+        temp1 = double(inImg);
+        temp1 = temp1./255;
+        temp2 = double(m);
+        temp2 = temp2./255;
+        [ssimval, ssimmap] = ssim(uint8(inImg),uint8(m));
+        [peaksnr, snr] = psnr(temp1, temp2);
+        SSIM = ssimval;
         name = strcat(ImgName1,'_kmeans.jpg');
         imwrite(uint8(m), fullfile(FolderOutput, name));
         tic;
@@ -246,23 +253,30 @@ switch popAlg
         toc;
         set(handles.loop1,'string',count);
         set(handles.time1,'string',time + toc);
-        [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
-        SSIM = getSSIM(inImg, m);
+        [RMSE, MAE, SNR, PSNR, SC]=compare(temp1, temp2);
+        %SSIM = getSSIM(temp1, temp2);
         % Alert user of the answer.
-        message = sprintf('Ket qua K-means\n MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+        message = sprintf('Ket qua K-means\n RMSE = %.4f.\n MAE = %.4f.\n SNR = %.4f.\n PSNR = %.4f.\n SC = %.4f.\n SSIM = %.4f.\n', RMSE, MAE, snr, peaksnr, SC, SSIM);
         h = msgbox(message, 'K-means evaluation');  
         
     case 2
         [m, time] = main_color(inImg, nBins, winSize, nClass);
+        temp1 = double(inImg);
+        temp1 = temp1./255;
+        temp2 = double(m);
+        temp2 = temp2./255;
+        [ssimval, ssimmap] = ssim(temp1,temp2);
+        [peaksnr, snr] = psnr(temp1, temp2);
+        SSIM = ssimval;
         name = strcat(ImgName1,'_fcm_kmeans.jpg');
         imwrite(uint8(m), fullfile(FolderOutput, name));
         tic;
         outImg1 = ImgSeg(m, nBins, winSize, nClass);
         toc;
         set(handles.time1,'string',time + toc);
-        [MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
-        SSIM = getSSIM(inImg, m);
-        message = sprintf('Ket qua FCM MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+        [RMSE, MAE, SNR, PSNR, SC]=compare(temp1, temp2);
+        %SSIM = getSSIM(temp1, temp2);
+        message = sprintf('Ket qua FCM\n RMSE = %.4f.\n MAE = %.4f.\n SNR = %.4f.\n PSNR = %.4f.\n SC = %.4f.\n SSIM = %.4f.\n', RMSE, MAE, snr, peaksnr, SC, SSIM);
         h = msgbox(message, 'FCM evaluation');
 end
 try
@@ -572,21 +586,29 @@ end
 global ImgName2 FolderOutput;
 [time, count, m] = K_means_pp(inImg, nClass);
 m = lab2rgb(m);
+temp1 = double(inImg);
+temp1 = temp1./255;
+temp2 = double(m);
+temp2 = temp2./255;
+[ssimval, ssimmap] = ssim(temp1,temp2);
+[peaksnr, snr] = psnr(temp1, temp2);
+SSIM = ssimval;
 name = strcat(ImgName2,'_kmeans_pp.jpg');
 imwrite(uint8(m), fullfile(FolderOutput, name));
 tic;
 outImg2 = ImgSeg(m, nBins, winSize, nClass);
 toc;
 set(handles.loop2,'string',count);
-set(handles.time2,'string',time + toc);
+%set(handles.time2,'string',time + toc);
+set(handles.time2,'string',time);
 axes(handles.axes4)
 ax = gca;
 imshow(outImg2);
 colormap(ax,map2);
-[MSE, MAE, SNR, PSNR, SC]=compare(inImg, m);
-SSIM = getSSIM(inImg, m);
+[RMSE, MAE, SNR, PSNR, SC]=compare(temp1, temp2);
+%SSIM = getSSIM(temp1, temp2);
 % Alert user of the answer.
-message = sprintf('Ket qua K-means cai tien\n MSE = %.2f.\n MAE = %.2f.\n SNR = %.2f.\n PSNR = %.2f.\n SC = %.2f.\n SSIM = %.2f.\n', MSE, MAE, SNR, PSNR, SC, SSIM);
+message = sprintf('Ket qua K-means* cai tien\n RMSE = %.4f.\n MAE = %.4f.\n SNR = %.4f.\n PSNR = %.4f.\n SC = %.4f.\n SSIM = %.4f.\n', RMSE, MAE, snr, peaksnr, SC, SSIM);
 msgbox(message, 'K-means cai tien');
       
       
@@ -1488,7 +1510,7 @@ outImg = reshape(fusedMapShow,s(1),s(2));
 %Kmeans++
 function [time, count, m] = K_means_pp(Img,k)
 h = waitbar(0,'Please wait ...');
-tic;
+
 count = 0;
 m = double(Img);
 m = rgb2lab(m);
@@ -1501,7 +1523,7 @@ for i = 1:k
 end
 
 temp = zeros(maxRow,maxCol); % initialize as zero vector
-
+tic;
 while(1)
     waitbar(count/100);
     d=DistMatrix(m,c); % calculate objcets-centroid distances 
@@ -1529,7 +1551,6 @@ while(1)
         end
     end 
 end 
-
 time = toc;
 close(h); 
 
@@ -1595,7 +1616,7 @@ for i = 1:c
     d(:,:,i) = sqrt(sum(temp.^2,3));
 end
 
-function [mse, mae, snr, psnr, SC]=compare(frameReference,frameUnderTest)
+function [rmse, mae, snr, psnr, SC]=compare(frameReference,frameUnderTest)
 s1=(double(frameReference)-double(frameUnderTest)).^2;
 s2=abs(double(frameReference) - double(frameUnderTest));
 s3=double(frameReference).^2;
@@ -1607,8 +1628,9 @@ s5=sum(s5(:));
     sse = sum(s1(:));
     range = double(size(frameReference,1)*size(frameReference,2)*size(frameReference,3));
     mse  = sse / range;
+    rmse = sqrt(mse);
     mae = sum(s2(:)) / range;
-    SC = s4 / s5;
+    SC = s5 / s4;
     if( sse <= 1e-10) 
         snr = 100;
         psnr=100;
@@ -1700,12 +1722,15 @@ if ~isequal(Folder,0)
     count = 0;
     for iFile = 1:length(FileList)
         aFile = fullfile(Folder, FileList(iFile).name);
+        try
         inImg1 = imread(aFile);
+        catch
+        end
         [re, ~] = test_fire(inImg1, count);
         count = count + re;
     end
     
-    message = sprintf('Ket qua\n Fire = %.2f.\n Sum = %.2f.\n', count, sum);
+    message = sprintf('Ket qua\n Fire = %.4f.\n Sum = %.4f.\n', count, sum);
     msgbox(message, 'Test');
     close(h);
 else

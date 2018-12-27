@@ -14,6 +14,10 @@ rchannel =Im1( :,: ,1);
 gchannel =Im1( :,: ,2);
 bchannel =Im1( :,: ,3);
 
+rr= (mean(mean(rchannel)))
+gg= (mean(mean(gchannel)))
+bb= (mean(mean(bchannel)))
+
 %below lines for display the R, G and  B cloured  image
 %
 R = Im1;
@@ -60,9 +64,9 @@ Cr = 128+(0.43921484375  * rchannel)- (0.3677890625 * gchannel) -( 0.07142578125
 %Cb= 128+(-0.168736 * rchannel)-(0.331264 * gchannel) + (0.5* bchannel);
 %Cr = 128+(0.5  * rchannel)- (0.418688 * gchannel) -( 0.081312 * bchannel);
 %%
- Ymean=  (mean(mean(Ydash)));
- Cbmean= (mean(mean(Cb)));
- Crmean= (mean(mean(Cr)));
+ Ymean=  (mean(mean(Ydash)))
+ Cbmean= (mean(mean(Cb)))
+ Crmean= (mean(mean(Cr)))
  Crstd= std2(Cr);
 %figure
 %set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
