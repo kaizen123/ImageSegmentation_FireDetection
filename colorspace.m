@@ -1,43 +1,4 @@
 function varargout = colorspace(Conversion,varargin)
-%COLORSPACE  Convert a color image between color representations.
-%   B = COLORSPACE(S,A) converts the color representation of image A
-%   where S is a string specifying the conversion.  S tells the
-%   source and destination color spaces, S = 'dest<-src', or
-%   alternatively, S = 'src->dest'.  Supported color spaces are
-%
-%     'RGB'              R'G'B' Red Green Blue (ITU-R BT.709 gamma-corrected)
-%     'YPbPr'            Luma (ITU-R BT.601) + Chroma 
-%     'YCbCr'/'YCC'      Luma + Chroma ("digitized" version of Y'PbPr)
-%     'YUV'              NTSC PAL Y'UV Luma + Chroma
-%     'YIQ'              NTSC Y'IQ Luma + Chroma
-%     'YDbDr'            SECAM Y'DbDr Luma + Chroma
-%     'JPEGYCbCr'        JPEG-Y'CbCr Luma + Chroma
-%     'HSV'/'HSB'        Hue Saturation Value/Brightness
-%     'HSL'/'HLS'/'HSI'  Hue Saturation Luminance/Intensity
-%     'XYZ'              CIE XYZ
-%     'Lab'              CIE L*a*b* (CIELAB)
-%     'Luv'              CIE L*u*v* (CIELUV)
-%     'Lch'              CIE L*ch (CIELCH)
-%
-%  All conversions assume 2 degree observer and D65 illuminant.  Color
-%  space names are case insensitive.  When R'G'B' is the source or
-%  destination, it can be omitted. For example 'yuv<-' is short for
-%  'yuv<-rgb'.
-%
-%  MATLAB uses two standard data formats for R'G'B': double data with
-%  intensities in the range 0 to 1, and uint8 data with integer-valued
-%  intensities from 0 to 255.  As MATLAB's native datatype, double data is
-%  the natural choice, and the R'G'B' format used by colorspace.  However,
-%  for memory and computational performance, some functions also operate
-%  with uint8 R'G'B'.  Given uint8 R'G'B' color data, colorspace will
-%  first cast it to double R'G'B' before processing.
-%
-%  If A is an Mx3 array, like a colormap, B will also have size Mx3.
-%
-%  [B1,B2,B3] = COLORSPACE(S,A) specifies separate output channels.
-%  COLORSPACE(S,A1,A2,A3) specifies separate input channels.
-% Pascal Getreuer 2005-2006
-%%% Input parsing %%%
 if nargin < 2, error('Not enough input arguments.'); end
 [SrcSpace,DestSpace] = parse(Conversion);
 if nargin == 2
